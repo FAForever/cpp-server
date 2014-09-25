@@ -20,12 +20,13 @@ void LobbyServer::onClientConnecting()
   while(server.hasPendingConnections())
   {
     LobbyClient* client = new LobbyClient(server.nextPendingConnection());
-    clients.append(client);
     connect(client,SIGNAL(destroyed(QObject*)),SLOT(onClientDestroyed(QObject*)));
+
+    clients.insert(client);
   }
 }
 
 void LobbyServer::onClientDestroyed(LobbyClient* client)
 {
-
+  clients.erase(client);
 }

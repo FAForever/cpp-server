@@ -5,6 +5,7 @@
 #include <QTcpServer>
 #include <QList>
 
+#include <set>
 #include "preamble.h"
 
 #include "LobbyClient.h"
@@ -16,7 +17,7 @@ public:
   explicit LobbyServer(QObject *parent = 0);
 
   QTcpServer server;
-  QList<LobbyClient*> clients;
+  set<LobbyClient*> clients;
 
   void start(QHostAddress addr = QHostAddress::Any, quint16 port = 8001);
 signals:
