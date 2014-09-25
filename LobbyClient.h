@@ -6,6 +6,8 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 
+#include <QTimer>
+
 typedef QJsonObject Json;
 
 class LobbyClient : public QObject
@@ -25,6 +27,8 @@ private:
 
   State state;
 
+  QTimer keep_alive;
+
   void onMessage(QString id, Json data);
 
   void onHandshake(QString id, Json data);
@@ -40,6 +44,8 @@ public slots:
 
 private slots:
   void onReadyRead();
+
+  void keepAlive();
 
   void onError(QAbstractSocket::SocketError error);
   void onDisconnect();

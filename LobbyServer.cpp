@@ -26,7 +26,7 @@ void LobbyServer::onClientConnecting()
   }
 }
 
-void LobbyServer::onClientDestroyed(LobbyClient* client)
+void LobbyServer::onClientDestroyed(QObject* client)
 {
-  clients.erase(client);
+  clients.erase((LobbyClient*)client);
 }

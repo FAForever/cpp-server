@@ -26,7 +26,7 @@ public slots:
 
 private slots:
   void onClientConnecting();
-  void onClientDestroyed(LobbyClient* client);
+  void onClientDestroyed(QObject* client);
 };
 
 #endif // LOBBYSERVER_H

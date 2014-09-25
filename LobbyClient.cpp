@@ -1,6 +1,6 @@
 #include "LobbyClient.h"
 
-#include <QDataStream>
+#include <QTime>
 
 LobbyClient::LobbyClient(QTcpSocket* socket, QObject *parent) :
   QObject(parent), socket(socket)
@@ -10,16 +10,21 @@ LobbyClient::LobbyClient(QTcpSocket* socket, QObject *parent) :
   connect(socket,SIGNAL(disconnected()),SLOT(onDisconnect()));
 
   state = HANDSHAKE;
+
+  connect(&keep_alive,SIGNAL(timeout()),SLOT(keepAlive()));
 }
 
 void LobbyClient::send(QString command, Json data)
 {
+  qDebug() << getName() << "<<" << command << data;
+
   Json obj;
 
   obj["id"] = command;
   obj["data"] = data;
 
-  QByteArray buf = QJsonDocument(obj).toBinaryData();
+  //QByteArray buf = QJsonDocument(obj).toBinaryData();
+  QByteArray buf = QJsonDocument(obj).toJson(QJsonDocument::Compact);
 
   quint32 size = buf.size();
 
@@ -29,6 +34,8 @@ void LobbyClient::send(QString command, Json data)
 
 void LobbyClient::onMessage(QString id, Json data)
 {
+  qDebug() << getName() << ">>" << id << data;
+
   switch(state)
   {
   case HANDSHAKE:
@@ -53,7 +60,7 @@ void LobbyClient::onHandshake(QString id, Json data)
 
   QString address = data["server_address"].toString();
 
-  if(address != "scfaf.net")
+  /*if(address != "scfaf.net")
     // Are we spoofed?
   {
     Json resp;
@@ -63,7 +70,7 @@ void LobbyClient::onHandshake(QString id, Json data)
     send("handshake_resp", resp);
     disconnect();
   }
-  else
+  else*/
   {
     int proto_ver = data["protocol_version"].toInt();
     if(proto_ver != 0)
@@ -80,7 +87,7 @@ void LobbyClient::onHandshake(QString id, Json data)
       Json resp;
       resp["success"] = true;
 
-      send("hanshake_resp", resp);
+      send("handshake_resp", resp);
       state = LOGIN;
     }
   }
@@ -98,13 +105,26 @@ void LobbyClient::onLogin(QString id, Json data)
     send("login_resp", resp);
     disconnect();
   }
-  QString address = data["server_address"].toString();
 
+  QString username = data["username"].toString();
+  QString password = data["username"].toString();
+
+  Json resp;
+  resp["success"] = true;
+
+  send("login_resp", resp);
 }
 
 void LobbyClient::onPlay(QString id, Json data)
 {
 
+}
+
+void LobbyClient::keepAlive()
+{
+  Json kp;
+  kp["time"] = QTime::currentTime().toString(Qt::ISODate);
+  send("PING", kp);
 }
 
 void LobbyClient::disconnect()
@@ -130,7 +150,8 @@ void LobbyClient::onReadyRead()
 
     socket->read(4);
 
-    Json obj = QJsonDocument::fromBinaryData(socket->read(size)).object();
+    //Json obj = QJsonDocument::fromBinaryData(socket->read(size)).object();
+    Json obj = QJsonDocument::fromJson(socket->read(size)).object();
     onMessage(obj["id"].toString(), obj["data"].toObject());
   }
 }
